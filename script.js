@@ -1,3 +1,6 @@
+const som_hit = new Audio();
+som_hit.src = "./musics/hit.wav";
+
 // Criando uma nova imagem via javascript
 const sprites = new Image();
 sprites.src = "./sprites.png";
@@ -77,35 +80,61 @@ const chao = {
   },
 };
 
-const flappyBird = {
-  spriteX: 0,
-  spriteY: 0,
-  largura: 33,
-  altura: 24,
-  x: 10,
-  y: 50,
-  velocidade: 0,
-  gravidade: 0.25,
-  atualiza() {
-    // Sempre aumentando a velocidade para simular a gravidade sempre que atualiza o frame da tela
-    flappyBird.velocidade = flappyBird.velocidade + flappyBird.gravidade;
+const fazColisao = (flappyBird, chao) => {
+  const flappyBirdY = flappyBird.y + flappyBird.altura;
+  const chaoY = chao.y;
 
-    // Fazendo o passaro cair
-    flappyBird.y = flappyBird.y + flappyBird.velocidade;
-  },
-  desenha() {
-    contexto.drawImage(
-      sprites,
-      flappyBird.spriteX,
-      flappyBird.spriteY,
-      flappyBird.largura,
-      flappyBird.altura,
-      flappyBird.x,
-      flappyBird.y,
-      flappyBird.largura,
-      flappyBird.altura
-    );
-  },
+  if (flappyBirdY >= chaoY) {
+    return true;
+  }
+
+  return false;
+};
+
+const criaFlappyBird = () => {
+  const flappyBird = {
+    spriteX: 0,
+    spriteY: 0,
+    largura: 33,
+    altura: 24,
+    x: 10,
+    y: 50,
+    pulo: 4.6,
+    velocidade: 0,
+    gravidade: 0.25,
+    pula() {
+      // Toda vez que eu clickar ele deve diminuir a velocidade desse objeto
+      flappyBird.velocidade = -flappyBird.pulo;
+    },
+    atualiza() {
+      if (fazColisao(flappyBird, chao)) {
+        som_hit.play();
+        mudaParaTela(telas.inicio);
+        return;
+      }
+
+      // Sempre aumentando a velocidade para simular a gravidade sempre que atualiza o frame da tela
+      flappyBird.velocidade = flappyBird.velocidade + flappyBird.gravidade;
+
+      // Fazendo o passaro cair
+      flappyBird.y = flappyBird.y + flappyBird.velocidade;
+    },
+    desenha() {
+      contexto.drawImage(
+        sprites,
+        flappyBird.spriteX,
+        flappyBird.spriteY,
+        flappyBird.largura,
+        flappyBird.altura,
+        flappyBird.x,
+        flappyBird.y,
+        flappyBird.largura,
+        flappyBird.altura
+      );
+    },
+  };
+
+  return flappyBird;
 };
 
 const mensagemGetReady = {
@@ -130,18 +159,26 @@ const mensagemGetReady = {
   },
 };
 
+let globais = {};
 let telaAtiva = {};
 
 mudaParaTela = (novaTela) => {
   telaAtiva = novaTela;
+
+  if (telaAtiva.inicializa) {
+    telaAtiva.inicializa();
+  }
 };
 
 const telas = {
   inicio: {
+    inicializa() {
+      globais.flappyBird = criaFlappyBird();
+    },
     desenha() {
       planoDeFundo.desenha();
       chao.desenha();
-      flappyBird.desenha();
+      globais.flappyBird.desenha();
       mensagemGetReady.desenha();
     },
     atualiza() {},
@@ -153,10 +190,13 @@ const telas = {
     desenha() {
       planoDeFundo.desenha();
       chao.desenha();
-      flappyBird.desenha();
+      globais.flappyBird.desenha();
+    },
+    click() {
+      globais.flappyBird.pula();
     },
     atualiza() {
-      flappyBird.atualiza();
+      globais.flappyBird.atualiza();
     },
   },
 };
